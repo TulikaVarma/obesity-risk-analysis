@@ -32,3 +32,27 @@ print("\nDuplicate Rows:", dataset.duplicated().sum())
 
 # Numerical Statistics
 print("\nNumerical Statistics:\n", dataset[numerical_col].describe().T.round(3).to_string())
+
+# 2. Plot distributions of key features using histograms, box plots, etc.
+numerical_key_features = ["Age", "Weight", "CH2O", "FCVC", "FAF", "TUE"]
+categorical_key_features = ['family_history_with_overweight', 'FAVC', 'CAEC', "MTRANS"]
+
+# Plot numerical key features
+for num in numerical_key_features:
+    plt.figure()
+    plt.hist(dataset[num], bins=30, edgecolor="black", linewidth=0.6)
+    plt.title(f"{num} – Histogram")
+    plt.xlabel(num); plt.ylabel("Count")
+    plt.tight_layout()
+    plt.show()
+
+# Plot categorical key features
+for cat in categorical_key_features:
+    plt.figure()
+    data = dataset[cat].value_counts(dropna=False)
+    plt.bar([str(x) for x in data.index], data.values, edgecolor="black", linewidth=0.6)
+    plt.title(f"{cat} – Category Frequencies")
+    plt.xlabel(cat); plt.ylabel("Count")
+    plt.xticks(rotation=45, ha="right")
+    plt.tight_layout()
+    plt.show()
