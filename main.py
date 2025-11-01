@@ -203,3 +203,37 @@ print("5. There are 24 duplicate rows, which must be removed as they can add a s
 
 
 
+# Data Preprocessing Requirements 
+print("Datapreprocessing Requirements")
+# 1. Handle missing values appropriately (e.g., imputation, removal)
+# Check for duplicates
+duplicate_count_before = dataset.duplicated().sum()
+print(f"\nDuplicate rows found: {duplicate_count_before}")
+print(f"Dataset size before removing duplicates: {len(dataset)} rows")
+
+if duplicate_count_before > 0:
+    # Remove duplicates
+    dataset = dataset.drop_duplicates()
+    # Verify removal
+    duplicate_count_after = dataset.duplicated().sum()
+    rows_removed = duplicate_count_before - duplicate_count_after
+    print(f"Dataset size after removing duplicates: {len(dataset)} rows")
+    print(f"Removed {rows_removed} duplicate rows")
+else:
+    print("No duplicate rows found")
+
+# Reset index after removing duplicates
+dataset = dataset.reset_index(drop=True)
+
+#Handle Missing Values
+missing_values = dataset.isnull().sum()
+total_missing = missing_values.sum()
+
+if total_missing > 0:
+    print(f"\nMissing values found:")
+    print(missing_values[missing_values > 0])
+    # Add your imputation/removal logic here
+else:
+    print("\nNo missing values found in the dataset")
+
+#2. 
