@@ -59,12 +59,11 @@ for cat in categorical_key_features:
 # 3. Visualize relationships between features and identify correlations using heatmaps
 # Correlation matrix for numerical features
 correlation_matrix = dataset[numerical_col].corr()
-print("\nCorrelation Matrix:\n", correlation_matrix.round(3).to_string())
+print("\nCorrelation Matrix (Numerical Features):")
+print(correlation_matrix.round(3).to_string())
 
 # Create correlation heatmap
-plt.figure(figsize=(12, 10))
-
-# Create heatmap
+plt.figure(figsize=(10, 8))
 im = plt.imshow(correlation_matrix, cmap='coolwarm', aspect='auto', vmin=-1, vmax=1)
 cbar = plt.colorbar(im)
 cbar.set_label('Correlation Coefficient', rotation=270, labelpad=20)
@@ -76,110 +75,131 @@ plt.yticks(range(len(numerical_col)), numerical_col)
 # Add correlation values as text
 for i in range(len(numerical_col)):
     for j in range(len(numerical_col)):
-        text = plt.text(j, i, f'{correlation_matrix.iloc[i, j]:.2f}',
-                       ha="center", va="center", color="black", fontsize=8)
+        plt.text(j, i, f'{correlation_matrix.iloc[i, j]:.2f}',
+                ha="center", va="center", color="black", fontsize=8)
 
 plt.title("Correlation Heatmap of Numerical Features")
 plt.tight_layout()
 plt.show()
 
-# Calculate all correlations for summary statistics
+# Calculate correlation statistics
+all_corrs = []
 strong_corr = []
 moderate_corr = []
-all_corrs = []
+weak_corr = []
+
 for i in range(len(correlation_matrix.columns)):
     for j in range(i + 1, len(correlation_matrix.columns)):
-        all_corrs.append(abs(correlation_matrix.iloc[i, j]))
+        feat1 = correlation_matrix.columns[i]
+        feat2 = correlation_matrix.columns[j]
+        corr = correlation_matrix.iloc[i, j]
+        abs_corr = abs(corr)
+        
+        all_corrs.append(abs_corr)
+        
+        if abs_corr > 0.5:
+            strong_corr.append((feat1, feat2, corr))
+        elif abs_corr > 0.3:
+            moderate_corr.append((feat1, feat2, corr))
+        else:
+            weak_corr.append((feat1, feat2, corr))
 
-print("\nStrong Correlations (|r| > 0.5):")
+# Display correlation categories
+print(f"\nStrong Correlations (|r| > 0.5): {len(strong_corr)} pairs")
 if strong_corr:
     for feat1, feat2, corr in sorted(strong_corr, key=lambda x: abs(x[2]), reverse=True):
-        print(f"{feat1} <-> {feat2} : {corr}")
+        direction = "positive" if corr > 0 else "negative"
+        print(f"• {feat1} <-> {feat2}: {corr:.3f} ({direction})")
 else:
-    print("  None found")
+    print("• None found")
 
-print("\nModerate Correlations (0.3 < |r| ≤ 0.5):")
+print(f"\nModerate Correlations (0.3 < |r| ≤ 0.5): {len(moderate_corr)} pairs")
 if moderate_corr:
     for feat1, feat2, corr in sorted(moderate_corr, key=lambda x: abs(x[2]), reverse=True):
-        print(f"{feat1} <-> {feat2} : {corr}")
+        print(f"• {feat1} <-> {feat2}: {corr:.3f}")
 else:
-    print("  None found")
+    print("• None found")
 
+# Display top 5 overall correlations
+print(f"\nTop 5 correlations:")
+all_pairwise_corrs = []
+for i in range(len(correlation_matrix.columns)):
+    for j in range(i + 1, len(correlation_matrix.columns)):
+        feat1 = correlation_matrix.columns[i]
+        feat2 = correlation_matrix.columns[j]
+        corr = correlation_matrix.iloc[i, j]
+        all_pairwise_corrs.append((feat1, feat2, corr))
 
-#4. Discuss key insights drawn from EDA and potential challenges with the dataset
-print("\n1. DATASET CHARACTERISTICS:")
-print(f"   - Total samples: {dataset.shape[0]}")
-print(f"   - Features: {dataset.shape[1] - 1} (16 predictive features)")
-print(f"   - Target variable: NObeyesdad (7 classes)")
-print(f"   - No missing values detected")
-print(f"   - No duplicate rows found")
+top_5_correlations = sorted(all_pairwise_corrs, key=lambda x: abs(x[2]), reverse=True)[:5]
 
-print("\n2. FEATURE CORRELATIONS:")
+for feat1, feat2, corr in top_5_correlations:
+    direction = "positive" if corr > 0 else "negative"
+    strength = "STRONG" if abs(corr) > 0.5 else "MODERATE" if abs(corr) > 0.3 else "WEAK"
+    print(f"• {feat1} <-> {feat2}: {corr:.3f} ({direction}, {strength})")
+
+# Correlation summary statistics
+print(f"\nCorrelation statistics summary:")
 n_features = len(correlation_matrix.columns)
 expected_correlations = (n_features * (n_features - 1)) // 2
-print(f"   - Number of numerical features: {n_features}")
-print(f"   - Total unique pairwise correlations: {len(all_corrs)} (expected: {expected_correlations})")
-print(f"   - Mean absolute correlation: {np.mean(all_corrs):.3f}")
-print(f"   - Max absolute correlation: {np.max(all_corrs):.3f}")
-print(f"   - Weak correlations (|r| ≤ 0.3): {len([c for c in all_corrs if c <= 0.3])}/{len(all_corrs)}")
-print(f"   - Moderate correlations (0.3 < |r| ≤ 0.5): {len([c for c in all_corrs if 0.3 < c <= 0.5])}/{len(all_corrs)}")
-print(f"   - Strong correlations (|r| > 0.5): {len([c for c in all_corrs if c > 0.5])}/{len(all_corrs)}")
+print(f"• Mean absolute correlation: {np.mean(all_corrs):.3f}")
+print(f"• Maximum correlation: {np.max(all_corrs):.3f}")
+print(f"• Correlation distribution:")
+print(f"  - Strong (|r| > 0.5): {len(strong_corr)} pairs ({len(strong_corr)/len(all_corrs)*100:.1f}%)")
+print(f"  - Moderate (0.3 < |r| ≤ 0.5): {len(moderate_corr)} pairs ({len(moderate_corr)/len(all_corrs)*100:.1f}%)")
+print(f"  - Weak (|r| ≤ 0.3): {len(weak_corr)} pairs ({len(weak_corr)/len(all_corrs)*100:.1f}%)")
 
-# Age distribution insights
-print("\n3. AGE DISTRIBUTION:")
-print(f"   - Age range: {dataset['Age'].min():.1f} - {dataset['Age'].max():.1f} years")
-print(f"   - Mean age: {dataset['Age'].mean():.1f} ± {dataset['Age'].std():.1f} years")
-print(f"   - Young adults (<25): {(dataset['Age'] < 25).sum()} ({(dataset['Age'] < 25).sum()/len(dataset)*100:.1f}%)")
-print(f"   - Adults (25-40): {((dataset['Age'] >= 25) & (dataset['Age'] < 40)).sum()} ({((dataset['Age'] >= 25) & (dataset['Age'] < 40)).sum()/len(dataset)*100:.1f}%)")
-print(f"   - Older adults (40+): {(dataset['Age'] >= 40).sum()} ({(dataset['Age'] >= 40).sum()/len(dataset)*100:.1f}%)")
+# 4. Discuss key insights drawn from EDA and potential challenges with the dataset
+print("\nKEY INSIGHTS FROM EDA")
+print("\nDataset Overview:")
+print(f"• Samples: {dataset.shape[0]}, Features: {dataset.shape[1] - 1}")
+print(f"• Target: NObeyesdad (7 obesity classes)")
+print(f"• Data Quality: No missing values, {dataset.duplicated().sum()} duplicates")
 
-# Gender distribution
-print("\n4. GENDER DISTRIBUTION:")
+print("\nDemographic Profile:")
 gender_counts = dataset['Gender'].value_counts()
-for gender, count in gender_counts.items():
-    print(f"   - {gender}: {count} ({count/len(dataset)*100:.1f}%)")
+print(f"• Age Range: {dataset['Age'].min():.0f}-{dataset['Age'].max():.0f} years")
+print(f"• Mean Age: {dataset['Age'].mean():.1f} ± {dataset['Age'].std():.1f} years")
+print(f"• Gender: {gender_counts['Male']} Male, {gender_counts['Female']} Female")
+print(f"• Young Adults (<25): {(dataset['Age'] < 25).sum()/len(dataset)*100:.1f}%")
 
-print("\n=== POTENTIAL CHALLENGES ===")
-# Challenge 1: Class Imbalance
-print("\n1. CLASS IMBALANCE:")
-target_distribution = dataset['NObeyesdad'].value_counts().sort_index()
-print(f"   Target variable distribution:")
-for obesity_class, count in target_distribution.items():
-    percentage = count / len(dataset) * 100
-    bar = "█" * int(percentage / 2)
-    print(f"   {obesity_class:25s}: {count:4d} ({percentage:5.1f}%) {bar}")
-# Calculate imbalance ratio
-max_class = target_distribution.max()
-min_class = target_distribution.min()
-imbalance_ratio = max_class / min_class
-print(f"\n   Imbalance ratio (max/min): {imbalance_ratio:.2f}:1")
-print(f"   Recommendation: Consider using:")
-print(f"   - Stratified sampling for train/test split")
-print(f"   - Class weights in model training")
-print(f"   - SMOTE or other resampling techniques if needed")
+print("\nPhysical Measurements:")
+print(f"• Height: {dataset['Height'].min():.2f}-{dataset['Height'].max():.2f} meters")
+print(f"• Weight: {dataset['Weight'].min():.1f}-{dataset['Weight'].max():.1f} kg")
 
-# Challenge 2: Feature Multicollinearity
-print("\n2. FEATURE MULTICOLLINEARITY:")
-if strong_corr:
-    print(f"   Found {len(strong_corr)} strong correlation(s):")
-    for feat1, feat2, corr in sorted(strong_corr, key=lambda x: abs(x[2]), reverse=True)[:3]:
-        print(f"   - {feat1} <-> {feat2}: r = {corr:.3f}")
-    print(f"   Recommendation: Monitor these features for potential redundancy")
-else:
-    print(f"   No strong correlations (|r| > 0.5) detected")
-    print(f"   All numerical features appear relatively independent")
+print("\nKey Correlations:")
+for feat1, feat2, corr in top_5_correlations:
+    direction = "positive" if corr > 0 else "negative"
+    print(f"• {feat1} <-> {feat2}: {corr:.3f} ({direction})")
 
-# Challenge 3: Mixed Data Types
-print("\n3. MIXED DATA TYPES:")
-print(f"   - Numerical features: {len(numerical_col)}")
-print(f"   - Categorical features: {len(categorical_col)}")
-print(f"   Recommendation: Will require encoding for categorical variables")
-print(f"   - Binary categorical: Gender, family_history_with_overweight, FAVC, SMOKE, SCC")
-print(f"   - Ordinal categorical: CAEC, CALC, MTRANS")
+print("\nPotential Challenges")
 
-# Challenge 4: Feature Scales
-print("\n4. FEATURE SCALING NEEDS:")
-print(f"   Numerical features have different scales:")
-for col in numerical_col[:5]:  # Show first 5
-    print(f"   - {col:10s}: [{dataset[col].min():.2f}, {dataset[col].max():.2f}]")
-print(f"   Recommendation: Apply StandardScaler or MinMaxScaler for distance-based models")
+# Challenge 1: Weak Correlation between most features
+print("\n1. Weak Feature Correlations:")
+print(f"• Mean absolute correlation: {np.mean(all_corrs):.3f}")
+print(f"• Strongest correlation: Height ↔ Weight (r = {correlation_matrix.loc['Height', 'Weight']:.3f})")
+print(f"• {len(weak_corr)} of {len(all_corrs)} feature pairs show weak correlations (|r| ≤ 0.3)")
+
+# Challenge 2: Duplicate Rows
+print("\n2. Duplicate Rows:")
+print(f"• Found: {dataset.duplicated().sum()} duplicate rows")
+
+# Challenge 3: Feature Scaling Requirements
+print("\n3. Feature Scaling Requirements:")
+print("• Features have very different ranges:")
+print(f"  - Weight: {dataset['Weight'].min():.0f}-{dataset['Weight'].max():.0f}")
+print(f"  - TUE: {dataset['TUE'].min():.0f}-{dataset['TUE'].max():.0f}")
+print(f"  - Age: {dataset['Age'].min():.0f}-{dataset['Age'].max():.0f}")
+
+# Key Insights summary 
+print("\n1. By carrying out EDA we notice that the target variable is well-distributed across "
+"the obesity categories, which reduces the risk of bias towards any class.")
+print("2. There are no missing values which simplifies the preprocessing stage.")
+print("3. Some features such as Age, Height, and Weight have a wide range of values, " \
+"that can help model diverse patterns.")
+print("4. Feature correlations mostly have weak correlations with each other and the target. Weak correlations" \
+"imply that individual features alone might not strongly predict obesity categories, highlighting the " \
+"need for using multiple features to capture the relationship.")
+print("5. There are 24 duplicate rows, which must be removed as they can add a slight bias analysis.")
+
+
+
