@@ -191,13 +191,13 @@ print(f"  - TUE: {dataset['TUE'].min():.0f}-{dataset['TUE'].max():.0f}")
 print(f"  - Age: {dataset['Age'].min():.0f}-{dataset['Age'].max():.0f}")
 
 # Key Insights summary 
-print("\n1. By carrying out EDA we notice that the target variable is well-distributed across "
+print("\n1. We notice that the target variable is well-distributed across "
 "the obesity categories, which reduces the risk of bias towards any class.")
 print("2. There are no missing values which simplifies the preprocessing stage.")
 print("3. Some features such as Age, Height, and Weight have a wide range of values, " \
 "that can help model diverse patterns.")
 print("4. Feature correlations mostly have weak correlations with each other and the target. Weak correlations" \
-"imply that individual features alone might not strongly predict obesity categories, highlighting the " \
+" imply that individual features alone might not strongly predict obesity categories, highlighting the " \
 "need for using multiple features to capture the relationship.")
 print("5. There are 24 duplicate rows, which must be removed as they can add a slight bias analysis.")
 
