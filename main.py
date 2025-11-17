@@ -236,4 +236,20 @@ if total_missing > 0:
 else:
     print("\nNo missing values found in the dataset")
 
-#2. 
+# Normalization on Weight and Height attribute using Min-max scaling
+columns_to_be_normalaized = ["Height", "Weight"]
+
+dataset[columns_to_be_normalaized] = (dataset[columns_to_be_normalaized] - dataset[columns_to_be_normalaized].min()) / (
+    dataset[columns_to_be_normalaized].max() - dataset[columns_to_be_normalaized].min())
+
+# First few rows of hieghts and weights after normalization
+print("first few rows of height and weight after normalization:")
+print(dataset[columns_to_be_normalaized].head())
+
+# One hot encoding the categorical attributes
+
+categorical_cols = ["Gender", "FAVC", "MTRANS"]
+
+dataset = pd.get_dummies(dataset, columns=categorical_cols)
+
+print(dataset.head())
