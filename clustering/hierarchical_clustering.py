@@ -93,6 +93,7 @@ def hierarchical_clustering(data):
 
   # Discussion: Appropriateness and Performance Comparison
   print("\n*** Hierarchical Clustering Analysis Discussion ***")
+  print("\n Note: while hierarchical clustering usually produces dendogram, but in here we specificy n_cluster for fair comparison with other clustering algorithms")
   print(f"Hierarchical clustering with Ward linkage fits this obesity dataset well because the points are grouped based on distances in the features and doesn't really need class labels to find structure. From the k values tested, k={best_n_clusters} achieved the highest silhouette score of {best_sillhouette:.3f} compare to k = 3 (0.124), k = 5 (0.185), k = 7 (0.217). Therefore, the algorithm and the PCA successfully identified {best_n_clusters} clusters that fit the major obesity categories. \n")
 
   return {
