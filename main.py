@@ -7,6 +7,8 @@ from outlier_detection.knn_outlier_detection import knn_outlier_detection
 from feature_selection.mutual_information import mutual_information
 from classification.knn_classification import knn_classification
 from hyperparameter_tuning.knn_hyperparameter_tuning import knn_hyperparameter_tuning
+from clustering.dbscan_clustering import dbscan_clustering
+from outlier_detection.probabilistic_outlier_detection import probabilistic_outlier_detection
 
 def load_and_split_data():
   # Load and split data consistently (60/20/20)
@@ -33,12 +35,13 @@ def clustering_analysis(data):
   print("1. CLUSTERING ANALYSIS")
 
   hierarchical_results = hierarchical_clustering(data)
+  dbscan_results = dbscan_clustering(data)
   # TODO: : add K-Means and DBSCAN clustering results
 
   clustering_results = {
     'hierarchical': hierarchical_results,
+    'dbscan': dbscan_results,
     # 'kmeans': kmeans_results,
-    # 'dbscan': dbscan_results,
   }
 
   # Compare all three clustering results and discussion
@@ -57,12 +60,13 @@ def outlier_detection(data):
   X_pca_2d = pca.fit_transform(X_encoded)
 
   knn_outlier_results = knn_outlier_detection(data, X_pca_2d=X_pca_2d)
+  probabilistic_outlier_results = probabilistic_outlier_detection(data, X_pca_2d=X_pca_2d)
   # TODO: : add LOF and Probabilistic outlier detection results
 
   outlier_detection_results = {
     'knn': knn_outlier_results,
+    'probabilistic': probabilistic_outlier_results
     # 'lof': lof_results,
-    # 'probabilistic': probabilistic_results,
   }
 
   # Analyze all three outlier detection results and discussion
