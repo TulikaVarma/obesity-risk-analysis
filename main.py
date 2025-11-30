@@ -9,6 +9,8 @@ from classification.knn_classification import knn_classification
 from hyperparameter_tuning.knn_hyperparameter_tuning import knn_hyperparameter_tuning
 from clustering.dbscan_clustering import dbscan_clustering
 from outlier_detection.probabilistic_outlier_detection import probabilistic_outlier_detection
+from feature_selection.lasso_regression import lasso_feature_selection
+from classification.logistic_regression import logistic_regression_classification  
 
 def load_and_split_data():
   # Load and split data consistently (60/20/20)
@@ -30,12 +32,12 @@ def load_and_split_data():
   
   return data, train_data, valid_data, test_data
 
-def clustering_analysis(data):
+def clustering_analysis(train_data):
   # Clustering Analysis
   print("1. CLUSTERING ANALYSIS")
 
-  hierarchical_results = hierarchical_clustering(data)
-  dbscan_results = dbscan_clustering(data)
+  hierarchical_results = hierarchical_clustering(train_data)
+  dbscan_results = dbscan_clustering(train_data)
   # TODO: : add K-Means and DBSCAN clustering results
 
   clustering_results = {
@@ -50,18 +52,18 @@ def clustering_analysis(data):
 
   return clustering_results
 
-def outlier_detection(data):
+def outlier_detection(train_data):
   # Outlier Detection
   print("2. OUTLIER DETECTION")
 
   # Compute PCA once for all outlier detectionvisualizations
-  X_encoded = data.drop(['NObeyesdad'], axis=1)
+  X_encoded = train_data.drop(['NObeyesdad'], axis=1)
   pca = PCA(n_components=2)
   X_pca_2d = pca.fit_transform(X_encoded)
 
-  knn_outlier_results = knn_outlier_detection(data, X_pca_2d=X_pca_2d)
-  probabilistic_outlier_results = probabilistic_outlier_detection(data, X_pca_2d=X_pca_2d)
-  # TODO: : add LOF and Probabilistic outlier detection results
+  knn_outlier_results = knn_outlier_detection(train_data, X_pca_2d=X_pca_2d)
+  probabilistic_outlier_results = probabilistic_outlier_detection(train_data, X_pca_2d=X_pca_2d)
+  # TODO: : add LOF outlier detection results
 
   outlier_detection_results = {
     'knn': knn_outlier_results,
@@ -75,17 +77,18 @@ def outlier_detection(data):
 
   return outlier_detection_results
 
-def feature_selection(data, train_data, test_data):
+def feature_selection(train_data, valid_data, test_data):
   # Feature Selection
   print("3. FEATURE SELECTION") 
 
-  mi_results = mutual_information(data, train_data, test_data)
-  # TODO: : add RFE and Wrapper feature selection results if needed
+  mi_results = mutual_information(train_data, valid_data, test_data)
+  lasso_results = lasso_feature_selection(train_data, valid_data, test_data)
+  # TODO: : add RFE feature selection results if needed
 
   feature_selection_results = {
     'mutual_information': mi_results,
+    'lasso': lasso_results,
     # 'rfe': rfe_results,
-    # 'wrapper': wrapper_results,
   }
 
   # Evaluate the model and for each model, compare with and without feature selection
@@ -97,12 +100,13 @@ def classification(train_data, valid_data, test_data, feature_selection_results)
   print("4. CLASSIFICATION")
 
   knn_results = knn_classification(train_data, valid_data, test_data, feature_selection_results['mutual_information'])
-  # TODO: : add Random Forest and logistic regression classification results
+  lr_results = logistic_regression_classification(train_data, valid_data, test_data, feature_selection_results['mutual_information']) 
+  # TODO: : add Random Forest classification results
 
   classification_results = {
     'knn': knn_results,
+    'logistic_regression': lr_results
     # 'random_forest': rf_results,
-    # 'logistic_regression': logistic_regression_results,
   }
 
   # Evaluate the models (classification results and discussion)
@@ -134,9 +138,9 @@ def main():
   # Run analysis using Hierarchical, Random Forest, and ...
   # hierarchical_results = hierarchical_analysis(data, train_data, valid_data, test_data)
   # rf_results = random_forest_predict(train_data, valid_data, test_data)
-  clustering_results = clustering_analysis(data)
-  outlier_results = outlier_detection(data)
-  feature_selection_results = feature_selection(data, train_data, test_data)
+  clustering_results = clustering_analysis(train_data)
+  outlier_results = outlier_detection(train_data)
+  feature_selection_results = feature_selection(train_data, valid_data, test_data)
   classification_results = classification(train_data, valid_data, test_data, feature_selection_results)
   tuning_results = hyperparameter_tuning(classification_results)
 

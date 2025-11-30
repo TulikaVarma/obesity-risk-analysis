@@ -9,10 +9,10 @@ from sklearn.feature_selection import mutual_info_classif, SelectKBest
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
 
-def mutual_information(data, train_data, test_data):
+def mutual_information(train_data, valid_data, test_data):
   # Prepare data
-  X_encoded = data.drop(['NObeyesdad'], axis=1)
-  y_original = data['NObeyesdad']
+  X_encoded = train_data.drop(['NObeyesdad'], axis=1)
+  y_original = train_data['NObeyesdad']
   le_target = LabelEncoder()
   y_encoded_full = le_target.fit_transform(y_original)
 
