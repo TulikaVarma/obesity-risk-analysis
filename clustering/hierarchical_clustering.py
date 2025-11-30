@@ -16,7 +16,7 @@ def hierarchical_clustering(data):
   le_target = LabelEncoder()
   y_encoded = le_target.fit_transform(y_original)
 
-    # 1. Hierarchical Clustering Algorithm
+  # 1. Hierarchical Clustering Algorithm
   print("==== Hierarchical Clustering ====")
 
   # Different number of clusters to evaluate
@@ -80,7 +80,7 @@ def hierarchical_clustering(data):
   plt.tight_layout()
   plt.show()
 
-  # # Analyze cluster characteristics
+  # Analyze cluster characteristics
   print("\nCluster Characteristics:")
   cluster_df = pd.DataFrame({'Cluster': cluster_labels_best,'Obesity_Class': y_original})
 
