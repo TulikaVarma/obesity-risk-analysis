@@ -1,12 +1,15 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
-from classification.random_forest import RandomForest
+from classification.random_forest import random_forest_classification
 from clustering.hierarchical_clustering import hierarchical_clustering
+from clustering.clarans import clarans_clustering
 from outlier_detection.knn_outlier_detection import knn_outlier_detection
+from outlier_detection.lof_outlier_detection import lof_outlier_detection
 from feature_selection.mutual_information import mutual_information
 from classification.knn_classification import knn_classification
 from hyperparameter_tuning.knn_hyperparameter_tuning import knn_hyperparameter_tuning
+from hyperparameter_tuning.random_forest_hyperparameter_tuning import random_forest_hyperparameter_tuning
 from clustering.dbscan_clustering import dbscan_clustering
 from outlier_detection.probabilistic_outlier_detection import probabilistic_outlier_detection
 from feature_selection.lasso_regression import lasso_feature_selection
@@ -37,13 +40,12 @@ def clustering_analysis(train_data):
   print("1. CLUSTERING ANALYSIS")
 
   hierarchical_results = hierarchical_clustering(train_data)
+  clarans_results = clarans_clustering(train_data)
   dbscan_results = dbscan_clustering(train_data)
-  # TODO: : add K-Means and DBSCAN clustering results
-
   clustering_results = {
     'hierarchical': hierarchical_results,
+    'clarans': clarans_results,
     'dbscan': dbscan_results,
-    # 'kmeans': kmeans_results,
   }
 
   # Compare all three clustering results and discussion
@@ -63,12 +65,12 @@ def outlier_detection(train_data):
 
   knn_outlier_results = knn_outlier_detection(train_data, X_pca_2d=X_pca_2d)
   probabilistic_outlier_results = probabilistic_outlier_detection(train_data, X_pca_2d=X_pca_2d)
-  # TODO: : add LOF outlier detection results
+  lof_outlier_results = lof_outlier_detection(train_data, X_pca_2d=X_pca_2d)
 
   outlier_detection_results = {
     'knn': knn_outlier_results,
-    'probabilistic': probabilistic_outlier_results
-    # 'lof': lof_results,
+    'probabilistic': probabilistic_outlier_results,
+    'lof': lof_outlier_results,
   }
 
   # Analyze all three outlier detection results and discussion
@@ -83,12 +85,9 @@ def feature_selection(train_data, valid_data, test_data):
 
   mi_results = mutual_information(train_data, valid_data, test_data)
   lasso_results = lasso_feature_selection(train_data, valid_data, test_data)
-  # TODO: : add RFE feature selection results if needed
-
   feature_selection_results = {
     'mutual_information': mi_results,
     'lasso': lasso_results,
-    # 'rfe': rfe_results,
   }
 
   # Evaluate the model and for each model, compare with and without feature selection
@@ -101,12 +100,12 @@ def classification(train_data, valid_data, test_data, feature_selection_results)
 
   knn_results = knn_classification(train_data, valid_data, test_data, feature_selection_results['mutual_information'])
   lr_results = logistic_regression_classification(train_data, valid_data, test_data, feature_selection_results['mutual_information']) 
-  # TODO: : add Random Forest classification results
+  rf_results = random_forest_classification(train_data, valid_data, test_data, feature_selection_results['mutual_information'])
 
   classification_results = {
     'knn': knn_results,
-    'logistic_regression': lr_results
-    # 'random_forest': rf_results,
+    'logistic_regression': lr_results,
+    'random_forest': rf_results,
   }
 
   # Evaluate the models (classification results and discussion)
@@ -119,11 +118,12 @@ def hyperparameter_tuning(classification_results):
   print("5. HYPERPARAMETER TUNING")
 
   knn_tuned = knn_hyperparameter_tuning(classification_results['knn'])
-  # TODO: : add Random Forest and logistic regression hyperparameter tuning results
+  rf_tuned = random_forest_hyperparameter_tuning(classification_results['random_forest'])
+  # TODO: : add logistic regression hyperparameter tuning results
 
   hyperparameter_tuning_results = {
     'knn_tuned': knn_tuned,
-    # 'random_forest_tuned': random_forest_tuned,
+    'random_forest_tuned': rf_tuned,
     # 'logistic_regression_tuned': logistic_regression_tuned,
   }
     
