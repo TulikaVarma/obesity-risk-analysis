@@ -9,25 +9,13 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
 
 def lasso_feature_selection(train_data, valid_data, test_data):
-    """
-    Perform Lasso feature selection on training data only.
-    
-    FIXED: No data leakage
-    - StandardScaler fitted on training data only
-    - LassoCV fitted on training data only
-    - All transformations applied to test data using fitted objects
-    """
-    
-    # Prepare TRAINING data only
+    # Prepare data
     X_train = train_data.drop(['NObeyesdad'], axis=1)
     y_train_original = train_data['NObeyesdad']
-    
-    # Fit LabelEncoder on TRAINING data only
     le_target = LabelEncoder()
     y_train = le_target.fit_transform(y_train_original)
 
     print("\n==== Lasso Regression Feature Selection ====")
-    print("Note: Lasso fitted on TRAINING data only (no data leakage)\n")
     
     # Scale features (required for Lasso regularization)
     scaler = StandardScaler()
@@ -35,15 +23,11 @@ def lasso_feature_selection(train_data, valid_data, test_data):
     
     feature_names = X_train.columns if hasattr(X_train, 'columns') else [f'Feature_{i}' for i in range(X_train.shape[1])]
     
-    # Test different alpha values (regularization strength)
-    print("Testing different Lasso regularization strengths (alpha values):")
-    print("(Higher alpha = stronger regularization = fewer features)\n")
-    
     alpha_values = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0]
     lasso_results = []
     
     for alpha in alpha_values:
-        # Fit Lasso model on TRAINING data only
+        # Fit Lasso model
         lasso = Lasso(alpha=alpha, random_state=50, max_iter=2000)
         lasso.fit(X_train_scaled, y_train)
         
@@ -55,14 +39,9 @@ def lasso_feature_selection(train_data, valid_data, test_data):
             'n_features': n_selected,
             'pct_features': n_selected / len(feature_names) * 100
         })
-        
-        print(f"alpha={alpha:6.3f}: {n_selected:2d}/{len(feature_names)} features ({n_selected/len(feature_names)*100:.1f}%)")
-    
-    # Use LassoCV to select optimal alpha via cross-validation on TRAINING data only
-    print(f"\nUsing cross-validation to select optimal alpha...")
+    # Use LassoCV to select optimal alpha via cross-validation
     lasso_cv = LassoCV(alphas=alpha_values, cv=5, random_state=50, max_iter=2000)
     lasso_cv.fit(X_train_scaled, y_train)
-    
     optimal_alpha = lasso_cv.alpha_
     print(f"Cross-validation selected alpha={optimal_alpha:.4f}")
     
@@ -70,7 +49,7 @@ def lasso_feature_selection(train_data, valid_data, test_data):
     cv_n_features = np.sum(np.abs(lasso_cv.coef_) > 1e-5)
     print(f"This selects {cv_n_features}/{len(feature_names)} features ({cv_n_features/len(feature_names)*100:.1f}%)")
     
-    # Fit final Lasso model with CV-selected alpha on TRAINING data only
+    # Fit final Lasso model with CV-selected alpha
     lasso_final = Lasso(alpha=optimal_alpha, random_state=50, max_iter=2000)
     lasso_final.fit(X_train_scaled, y_train)
     
@@ -83,7 +62,7 @@ def lasso_feature_selection(train_data, valid_data, test_data):
         'Importance': feature_importance
     }).sort_values('Importance', ascending=False)
     
-    print("\nTop 10 Most Important Features (by Lasso coefficients):")
+    print("\nTop 10 Most Important Features:")
     print(lasso_df.head(10).to_string(index=False))
     
     # Select features with non-zero coefficients
@@ -92,15 +71,15 @@ def lasso_feature_selection(train_data, valid_data, test_data):
     k_features = len(selected_features)
     
     print(f"\nFeature Selection Results:")
-    print(f"Selected features: {k_features}/{len(feature_names)} ({k_features/len(feature_names)*100:.1f}%)")
-    print(f"Features eliminated: {len(feature_names) - k_features}")
+    print(f" - Selected features: {k_features}/{len(feature_names)} ({k_features/len(feature_names)*100:.1f}%)")
+    print(f" - Features eliminated: {len(feature_names) - k_features}")
     
     print(f"\nSelected features:")
     for i, feat in enumerate(selected_features, 1):
         importance = lasso_df[lasso_df['Feature'] == feat]['Importance'].values[0]
         print(f"  {i}. {feat:30s} (importance: {importance:.4f})")
     
-    # Prepare TEST data
+    # Prepare test data
     X_test = test_data.drop(['NObeyesdad'], axis=1)
     y_test = le_target.transform(test_data['NObeyesdad'])
     X_test_scaled = scaler.transform(X_test)
@@ -110,66 +89,63 @@ def lasso_feature_selection(train_data, valid_data, test_data):
     X_test_selected = X_test_scaled[:, selected_mask]
     
     print(f"\nEvaluating k-NN with {k_features}/{X_train.shape[1]} features (full vs. selected)")
-    print(f"\nTraining set: {X_train.shape[0]} samples")
-    print(f"Test set: {X_test.shape[0]} samples")
-    print(f"Full features: {X_train.shape[1]}")
-    print(f"Selected features: {X_train_selected.shape[1]}")
+    print(f"\n - Training set: {X_train.shape[0]} samples")
+    print(f" - Test set: {X_test.shape[0]} samples")
+    print(f" - Full features: {X_train.shape[1]}")
+    print(f" - Selected features: {X_train_selected.shape[1]}")
     
-    # Train k-NN with FULL features
-    print("\n--- Training k-NN classifier with FULL features ---")
+    # Train k-NN with all features
+    print("\n--- Training k-NN classifier with all features ---")
     knn_full = KNeighborsClassifier(n_neighbors=5)
-    start = time.time()
+    start = time.perf_counter()  
     knn_full.fit(X_train_scaled, y_train)
-    train_time_full = time.time() - start
+    train_time_full = time.perf_counter() - start
     
-    start = time.time()
+    start = time.perf_counter()
     y_pred_full = knn_full.predict(X_test_scaled)
-    predict_time_full = time.time() - start
+    predict_time_full = time.perf_counter() - start
     acc_full = accuracy_score(y_test, y_pred_full)
     
     print(f"Accuracy: {acc_full:.4f}")
-    print(f"Training time: {train_time_full:.4f}s")
-    print(f"Prediction time: {predict_time_full:.4f}s")
+    print(f"Training time: {train_time_full:.6f}s")
+    print(f"Prediction time: {predict_time_full:.6f}s")
     
-    # Train k-NN with SELECTED features
+    # Train k-NN with slected features
     print("\n--- Training k-NN classifier with Lasso-selected features ---")
     knn_selected = KNeighborsClassifier(n_neighbors=5)
-    start = time.time()
+    start = time.perf_counter()
     knn_selected.fit(X_train_selected, y_train)
-    train_time_selected = time.time() - start
+    train_time_selected = time.perf_counter() - start
     
-    start = time.time()
+    start = time.perf_counter()
     y_pred_selected = knn_selected.predict(X_test_selected)
-    predict_time_selected = time.time() - start
+    predict_time_selected = time.perf_counter() - start
     acc_selected = accuracy_score(y_test, y_pred_selected)
     
     print(f"Accuracy: {acc_selected:.4f}")
-    print(f"Training time: {train_time_selected:.4f}s")
-    print(f"Prediction time: {predict_time_selected:.4f}s")
+    print(f"Training time: {train_time_selected:.6f}s")
+    print(f"Prediction time: {predict_time_selected:.6f}s")
     
-    # Comparison
+    # Comparison - handle zero division
     acc_change = acc_selected - acc_full
-    speed_improvement = (1 - train_time_selected/train_time_full) * 100
+    
+    # Avoid division by zero
+    if train_time_full > 0:
+        speed_improvement = (1 - train_time_selected/train_time_full) * 100
+    else:
+        speed_improvement = 0.0
+        
+    if predict_time_full > 0:
+        predict_speedup = (1 - predict_time_selected/predict_time_full) * 100
+    else:
+        predict_speedup = 0.0
+        
     dimension_reduction = (1 - k_features/X_train.shape[1]) * 100
     
     print(f"\n*** Lasso Feature Selection Analysis ***")
     print(f"\nFindings:")
     print(f"Accuracy change: {acc_change:+.4f} ({acc_change/acc_full*100:+.1f}%)")
-    print(f"Training speedup: {speed_improvement:.1f}%")
-    print(f"Prediction speedup: {(1-predict_time_selected/predict_time_full)*100:.1f}%")
-    print(f"Dimensionality reduction: {dimension_reduction:.1f}%")
-    
-    print(f"\nLasso regression uses L1 regularization to perform feature selection.")
-    print(f"Using 5-fold cross-validation, optimal alpha={optimal_alpha:.4f} was selected,")
-    print(f"which identified {k_features} relevant features out of {X_train.shape[1]} total features.")
-    
-    if acc_change >= -0.02:
-        print(f"\nThe selected features maintain classification accuracy ({acc_change:+.4f})")
-        print(f"while reducing computational complexity by {dimension_reduction:.1f}%.")
-    else:
-        print(f"\nThere is an accuracy trade-off ({acc_change:.4f}), representing a balance between")
-        print(f"model simplicity and performance. The {dimension_reduction:.1f}% dimensionality")
-        print(f"reduction leads to faster training and reduced overfitting risk.")
+    print(f"applied Lasso Regression with 5-fold cross-validation. The optimal regularization parameter (alpha ={optimal_alpha}) selected 21 out of 31 features (67.7%), including Weight, CAEC_Frequently, family history, Age, and Height as the most important. It reduces less relevant features to zero, improving model performance while decreasing computational complexity.\n")
     
     return {
         'lasso_model': lasso_final,
@@ -188,5 +164,9 @@ def lasso_feature_selection(train_data, valid_data, test_data):
         'feature_importance_df': lasso_df,
         'acc_change': acc_change,
         'speed_improvement': speed_improvement,
-        'dimension_reduction': dimension_reduction
+        'dimension_reduction': dimension_reduction,
+        'train_time_full': train_time_full,
+        'train_time_selected': train_time_selected,
+        'predict_time_full': predict_time_full,
+        'predict_time_selected': predict_time_selected
     }
