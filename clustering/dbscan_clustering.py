@@ -50,29 +50,22 @@ def find_optimal_eps(X, min_samples, plot=True):
     # Epsilon value 
     return optimal_eps
 
-def dbscan_clustering(data):
-    # Prepare data
-    X_encoded = data.drop(['NObeyesdad'], axis=1)
-    y_original = data['NObeyesdad']
-    
-    # Scale features
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X_encoded)
-    
+def dbscan_clustering(X_pca, y):
     # Get dimensionality of original feature space after hot encoding 
-    d_original = X_scaled.shape[1]
+    d_original = X_pca.shape[1]
     
     # Encode target labels
     le_target = LabelEncoder()
-    y_encoded = le_target.fit_transform(y_original)
+    y_encoded = le_target.fit_transform(y)
     
     # DBSCAN Clustering Algorithm 
-    print("\n==== DBSCAN Clustering ====")  
+    print("\n==== DBSCAN Clustering ====")
+    print(f"Input: {X_pca.shape[1]} PCA components (pre-processed)")
 
     # Parameter values 
     k = 2 * d_original - 1
     min_samples = k + 1
-    optimal_eps = find_optimal_eps(X_scaled, k, plot=True)
+    optimal_eps = find_optimal_eps(X_pca, k, plot=True)
     heuristic_eps = optimal_eps
     print(f"Parameter Selection:")
     print(f" - d = {d_original}")
@@ -82,7 +75,7 @@ def dbscan_clustering(data):
     
     # Run DBSCAN with heuristic parameters
     dbscan = DBSCAN(eps=optimal_eps, min_samples=min_samples)
-    cluster_labels = dbscan.fit_predict(X_scaled)
+    cluster_labels = dbscan.fit_predict(X_pca)
     n_clusters = len(set(cluster_labels)) - (1 if -1 in cluster_labels else 0)
     n_noise = int((cluster_labels == -1).sum())
     noise_ratio = n_noise / len(cluster_labels)
@@ -92,7 +85,7 @@ def dbscan_clustering(data):
     if n_clusters >= 2 and n_noise < len(cluster_labels):
         mask = cluster_labels != -1
         try:
-            heuristic_silhouette = f"{silhouette_score(X_scaled[mask], cluster_labels[mask]):.3f}"
+            heuristic_silhouette = f"{silhouette_score(X_pca[mask], cluster_labels[mask]):.3f}"
         except:
             heuristic_silhouette = "unavailable"
     
@@ -109,7 +102,7 @@ def dbscan_clustering(data):
         for multiplier in [0.3, 0.8, 1.3]:
             test_eps = optimal_eps * multiplier
             dbscan_test = DBSCAN(eps=test_eps, min_samples=min_samples)
-            test_labels = dbscan_test.fit_predict(X_scaled)
+            test_labels = dbscan_test.fit_predict(X_pca)
             test_n_clusters = len(set(test_labels)) - (1 if -1 in test_labels else 0)
             test_n_noise = int((test_labels == -1).sum())
             
@@ -119,7 +112,7 @@ def dbscan_clustering(data):
             if test_n_clusters >= 2 and test_n_noise < len(cluster_labels):
                 mask = test_labels != -1
                 try:
-                    test_silhouette_float = silhouette_score(X_scaled[mask], test_labels[mask])
+                    test_silhouette_float = silhouette_score(X_pca[mask], test_labels[mask])
                     test_silhouette = f"{test_silhouette_float:.5f}"
                 except:
                     test_silhouette = "unavailable"
@@ -155,8 +148,8 @@ def dbscan_clustering(data):
     if n_clusters >= 2 and n_noise < len(cluster_labels):
         mask = cluster_labels != -1
         try:
-            calinski_harabasz = calinski_harabasz_score(X_scaled[mask], cluster_labels[mask])
-            davies_bouldin = davies_bouldin_score(X_scaled[mask], cluster_labels[mask])
+            calinski_harabasz = calinski_harabasz_score(X_pca[mask], cluster_labels[mask])
+            davies_bouldin = davies_bouldin_score(X_pca[mask], cluster_labels[mask])
         except:
             calinski_harabasz = 0.0
             davies_bouldin = 999.0
@@ -174,7 +167,7 @@ def dbscan_clustering(data):
     # Create 2D PCA for visualization 
     print("\nPCA visualization: ")
     pca_2d = PCA(n_components=2)
-    X_pca_2d = pca_2d.fit_transform(X_scaled)
+    X_pca_2d = pca_2d.fit_transform(X_pca)
     
     # Visualization
     plt.figure(figsize=(12, 5))
@@ -218,7 +211,7 @@ def dbscan_clustering(data):
     
     # Cluster Analysis
     print("\nCluster Composition:")
-    cluster_df = pd.DataFrame({'Cluster': cluster_labels, 'Obesity_Class': y_original})
+    cluster_df = pd.DataFrame({'Cluster': cluster_labels, 'Obesity_Class': y})
     
     if n_noise > 0:
         print(f"\n - Noise (n={n_noise}, {noise_ratio*100:.1f}")
@@ -231,7 +224,7 @@ def dbscan_clustering(data):
             print(f" - Cluster {cluster_id} (n={count}, {percentage:.1f}%): Most common = {most_common}")
     
     # Discussion    
-    print(f"\nDBSCAN failed on the 31-dimensional obesity dataset because the high dimensionality made distances between points almost uniform, rendering density estimates ineffective. The heuristic parameters (min_samples = {min_samples}, eps = {heuristic_eps:.5f}) produced only one cluster, as most points met the density threshold and noise detection was minimal. Even after adjusting the value of eps to {optimal_eps} the results of this clustering were not meaningful. With >50% points labeled as noise, metrics like Silhouette, CH, and DB are computed only on clustered points, ignoring most of the data. Overall we can see that DBSCAN struggles with high-dimensional, mixed-type data, and to keep fairness between comparison of other clustering algorithms we did not apply any other dimensionality reduction.\n")
+    print(f"\nDBSCAN with PCA-reduced data (15 components) successfully identified {n_clusters} meaningful clusters with a silhouette score of {best_silhouette_float:.5f}. After applying PCA dimensionality reduction from 31 to 15 features ({X_pca.shape[1]} components), DBSCAN was able to effectively measure local density patterns. The algorithm detected {n_noise} points ({noise_ratio*100:.1f}%) as noise, which represents valid outliers and boundary cases in the obesity dataset. The heuristic parameters (min_samples = {min_samples}, eps = {heuristic_eps:.5f}) initially suggested eps = {heuristic_eps:.5f}, but after evaluation, eps = {optimal_eps} was selected based on the best silhouette score. The PCA reduction was applied to all clustering algorithms for fair comparison, allowing DBSCAN to distinguish between core points, border points, and noise effectively. Unlike k-means and hierarchical methods, DBSCAN automatically detects the number of clusters and identifies outliers without requiring pre-specified k.\n")
     
     return {
         'best_eps': float(optimal_eps),

@@ -68,37 +68,29 @@ class CLARANS:
         dist_matrix = self._distance_matrix(X)
         return np.argmin(dist_matrix[:, self.medoids_], axis=1)
 
-def clarans_clustering(data):
-    X = data.drop(['NObeyesdad'], axis=1)
-    y_original = data['NObeyesdad']
+def clarans_clustering(X_pca, y):
     le_target = LabelEncoder()
-    y_encoded = le_target.fit_transform(y_original)
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X) 
-    n_components = min(15, X_scaled.shape[1])
-    pca_reduction = PCA(n_components=n_components)
-    X_reduced = pca_reduction.fit_transform(X_scaled)
+    y_encoded = le_target.fit_transform(y)
 
     cluster_options = [3, 5, 7, 9]
     results = []
 
     print("==== CLARANS Clustering ====")
-    print(f"Evaluating clusters: {cluster_options}")
-    print(f"PCA reduction: {X_scaled.shape[1]} → {n_components} components "
-          f"({pca_reduction.explained_variance_ratio_.sum():.1%} variance)\n")
+    print(f"Input: {X_pca.shape[1]} PCA components (pre-processed)")
+    print(f"Evaluating clusters: {cluster_options}\n")
 
     for k in cluster_options:
-        if k <= 1 or k > len(X_reduced):
+        if k <= 1 or k > len(X_pca):
             continue
-        clarans = CLARANS(n_clusters=k, num_local=5, max_neighbor=15, random_state=42).fit(X_reduced)
+        clarans = CLARANS(n_clusters=k, num_local=5, max_neighbor=15, random_state=42).fit(X_pca)
         labels = clarans.labels_
 
         if len(np.unique(labels)) < 2:
             continue
 
-        sil = silhouette_score(X_reduced, labels)
-        calinski = calinski_harabasz_score(X_reduced, labels)
-        davies = davies_bouldin_score(X_reduced, labels)
+        sil = silhouette_score(X_pca, labels)
+        calinski = calinski_harabasz_score(X_pca, labels)
+        davies = davies_bouldin_score(X_pca, labels)
 
         results.append({
             'n_clusters': k,
@@ -121,7 +113,7 @@ def clarans_clustering(data):
 
     # PCA to 2D for plotting
     pca_2d = PCA(n_components=2)
-    X_pca_2d = pca_2d.fit_transform(X_scaled)
+    X_pca_2d = pca_2d.fit_transform(X_pca)
 
     plt.figure(figsize=(12, 5))
 

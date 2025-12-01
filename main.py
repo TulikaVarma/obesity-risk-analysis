@@ -13,7 +13,8 @@ from hyperparameter_tuning.random_forest_hyperparameter_tuning import random_for
 from clustering.dbscan_clustering import dbscan_clustering
 from outlier_detection.probabilistic_outlier_detection import probabilistic_outlier_detection
 from feature_selection.lasso_regression import lasso_feature_selection
-from classification.logistic_regression import logistic_regression_classification  
+from classification.logistic_regression import logistic_regression_classification
+from sklearn.preprocessing import StandardScaler
 
 def load_and_split_data():
   # Load and split data consistently (60/20/20)
@@ -39,9 +40,21 @@ def clustering_analysis(train_data):
   # Clustering Analysis
   print("1. CLUSTERING ANALYSIS")
 
-  hierarchical_results = hierarchical_clustering(train_data)
-  clarans_results = clarans_clustering(train_data)
-  dbscan_results = dbscan_clustering(train_data)
+  X = train_data.drop(['NObeyesdad'], axis=1)
+  y = train_data['NObeyesdad']
+  
+  # Standardize and apply PCA
+  scaler = StandardScaler()
+  X_scaled = scaler.fit_transform(X)
+  pca = PCA(n_components=15)
+  X_pca = pca.fit_transform(X_scaled)
+
+  print(f"Original features: {X.shape[1]} to PCA components: {pca.n_components_}")
+  print(f"Variance explained: {pca.explained_variance_ratio_.sum():.1%}\n")
+
+  hierarchical_results = hierarchical_clustering(X_pca, y)
+  clarans_results = clarans_clustering(X_pca, y)
+  dbscan_results = dbscan_clustering(X_pca, y)
   clustering_results = {
     'hierarchical': hierarchical_results,
     'clarans': clarans_results,
@@ -98,9 +111,9 @@ def classification(train_data, valid_data, test_data, feature_selection_results)
   # Classification
   print("4. CLASSIFICATION")
 
-  knn_results = knn_classification(train_data, valid_data, test_data, feature_selection_results['mutual_information'])
-  lr_results = logistic_regression_classification(train_data, valid_data, test_data, feature_selection_results['mutual_information']) 
-  rf_results = random_forest_classification(train_data, valid_data, test_data, feature_selection_results['mutual_information'])
+  knn_results = knn_classification(train_data, valid_data, test_data, feature_selection_results['lasso'])
+  lr_results = logistic_regression_classification(train_data, valid_data, test_data, feature_selection_results['lasso']) 
+  rf_results = random_forest_classification(train_data, valid_data, test_data, feature_selection_results['lasso'])
 
   classification_results = {
     'knn': knn_results,
