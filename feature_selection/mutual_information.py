@@ -8,6 +8,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.feature_selection import mutual_info_classif, SelectKBest
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import StandardScaler
 
 def mutual_information(train_data, valid_data, test_data):
   # Prepare data
@@ -54,24 +55,29 @@ def mutual_information(train_data, valid_data, test_data):
   X_test = test_data.drop(['NObeyesdad'], axis=1)
   y_test = le_target.transform(test_data['NObeyesdad'])
   
-  # Apply feature selection to train/test
-  X_train_selected = selector.transform(X_train)
-  X_test_selected = selector.transform(X_test)
+  # Scale the data for k-NN (k-NN is distance-based and benefits from scaling)
+  scaler = StandardScaler()
+  X_train_scaled = scaler.fit_transform(X_train)
+  X_test_scaled = scaler.transform(X_test)
+  
+  # Apply feature selection to scaled data
+  X_train_selected = selector.transform(X_train_scaled)
+  X_test_selected = selector.transform(X_test_scaled)
   
   print(f"\nTraining set: {X_train.shape[0]} samples")
   print(f"Test set: {X_test.shape[0]} samples")
   print(f"Full features: {X_train.shape[1]}")
   print(f"Selected features: {X_train_selected.shape[1]}")
   
-  # Train k-NN with full features
+  # Train k-NN with full scaled features
   print("\nTraining k-NN classifier with full features...")
   knn_full = KNeighborsClassifier(n_neighbors=5)
   start = time.time()
-  knn_full.fit(X_train, y_train)
+  knn_full.fit(X_train_scaled, y_train)
   train_time_full = time.time() - start
   
   start = time.time()
-  y_pred_full = knn_full.predict(X_test)
+  y_pred_full = knn_full.predict(X_test_scaled)
   predict_time_full = time.time() - start
   acc_full = accuracy_score(y_test, y_pred_full)
   
