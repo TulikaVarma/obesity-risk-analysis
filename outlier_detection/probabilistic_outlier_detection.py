@@ -1,9 +1,7 @@
 # Probabilistic outlier detection using Gaussian Mixture Model
-
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-
 from sklearn.mixture import GaussianMixture
 from sklearn.decomposition import PCA
 
@@ -13,7 +11,7 @@ def probabilistic_outlier_detection(data, X_pca_2d=None, n_components=3, thresho
   y_original = data['NObeyesdad']
   
   # Probabilistic Outlier Detection
-  print("\n==== Probabilistic Outlier Detection (Gaussian Mixture Model) ====")
+  print("\n==== Probabilistic Outlier Detection ====")
   print(f"Using {n_components} Gaussian components")
 
   # Fit Gaussian Mixture Model using EM algorithm
@@ -60,10 +58,8 @@ def probabilistic_outlier_detection(data, X_pca_2d=None, n_components=3, thresho
     print(f"  • {class_name}: {class_outliers}/{class_total} ({class_outliers/class_total*100:.2f}%)")
   
   print("\nOutlier Analysis:")
-  print("Probabilistic outliers represent samples with low probability under the learned Gaussian mixture.")
-  print("These are data points that deviate significantly from the typical patterns in the obesity dataset.")
-  print("\nDecision: Keep outliers for analysis as they represent valid edge cases and rare obesity patterns")
-  print("that could be important for understanding the full spectrum of obesity-related features.\n")
+  print("Probabilistic outliers represent samples with low probability. We decided to keep them as they are unusual but plausible combinations of features. The outliers represent valid edge cases that could provide important insights into rare obesity patterns.\n")
+
 
   return {
     'n_outliers': int(outlier.sum()),
