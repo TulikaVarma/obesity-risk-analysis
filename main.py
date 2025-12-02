@@ -10,6 +10,7 @@ from feature_selection.mutual_information import mutual_information
 from classification.knn_classification import knn_classification
 from hyperparameter_tuning.knn_hyperparameter_tuning import knn_hyperparameter_tuning
 from hyperparameter_tuning.random_forest_hyperparameter_tuning import random_forest_hyperparameter_tuning
+from hyperparameter_tuning.logistic_regression_hyperparameter_tuning import logistic_regression_hyperparameter_tuning
 from clustering.dbscan_clustering import dbscan_clustering
 from outlier_detection.probabilistic_outlier_detection import probabilistic_outlier_detection
 from feature_selection.lasso_regression import lasso_feature_selection
@@ -132,12 +133,11 @@ def hyperparameter_tuning(classification_results):
 
   knn_tuned = knn_hyperparameter_tuning(classification_results['knn'])
   rf_tuned = random_forest_hyperparameter_tuning(classification_results['random_forest'])
-  # TODO: : add logistic regression hyperparameter tuning results
-
+  lr_tuned = logistic_regression_hyperparameter_tuning(classification_results['logistic_regression'])
   hyperparameter_tuning_results = {
     'knn_tuned': knn_tuned,
     'random_forest_tuned': rf_tuned,
-    # 'logistic_regression_tuned': logistic_regression_tuned,
+    'logistic_regression_tuned': lr_tuned,
   }
     
   # Evaluate the models (hyperparameter tuning results and discussion)
