@@ -77,6 +77,7 @@ def dbscan_clustering(X_pca, y):
     dbscan = DBSCAN(eps=optimal_eps, min_samples=min_samples)
     cluster_labels = dbscan.fit_predict(X_pca)
     n_clusters = len(set(cluster_labels)) - (1 if -1 in cluster_labels else 0)
+    heuristic_clusters = n_clusters
     n_noise = int((cluster_labels == -1).sum())
     noise_ratio = n_noise / len(cluster_labels)
     
@@ -99,7 +100,7 @@ def dbscan_clustering(X_pca, y):
         # Store results for all multipliers
         test_results = []
         # Try different epsilon values
-        for multiplier in [0.3, 0.8, 1.3]:
+        for multiplier in [0.3, 0.5, 0.8]:
             test_eps = optimal_eps * multiplier
             dbscan_test = DBSCAN(eps=test_eps, min_samples=min_samples)
             test_labels = dbscan_test.fit_predict(X_pca)
@@ -214,7 +215,7 @@ def dbscan_clustering(X_pca, y):
     cluster_df = pd.DataFrame({'Cluster': cluster_labels, 'Obesity_Class': y})
     
     if n_noise > 0:
-        print(f"\n - Noise (n={n_noise}, {noise_ratio*100:.1f}")
+        print(f" - Noise (n={n_noise}, {noise_ratio*100:.1f}")
     for cluster_id in range(n_clusters):
         cluster_data = cluster_df[cluster_df['Cluster'] == cluster_id]
         if len(cluster_data) > 0:
@@ -223,9 +224,9 @@ def dbscan_clustering(X_pca, y):
             percentage = (count / len(cluster_df)) * 100
             print(f" - Cluster {cluster_id} (n={count}, {percentage:.1f}%): Most common = {most_common}")
     
-    # Discussion    
-    print(f"\nDBSCAN with PCA-reduced data (15 components) successfully identified {n_clusters} meaningful clusters with a silhouette score of {best_silhouette_float:.5f}. After applying PCA dimensionality reduction from 31 to 15 features ({X_pca.shape[1]} components), DBSCAN was able to effectively measure local density patterns. The algorithm detected {n_noise} points ({noise_ratio*100:.1f}%) as noise, which represents valid outliers and boundary cases in the obesity dataset. The heuristic parameters (min_samples = {min_samples}, eps = {heuristic_eps:.5f}) initially suggested eps = {heuristic_eps:.5f}, but after evaluation, eps = {optimal_eps} was selected based on the best silhouette score. The PCA reduction was applied to all clustering algorithms for fair comparison, allowing DBSCAN to distinguish between core points, border points, and noise effectively. Unlike k-means and hierarchical methods, DBSCAN automatically detects the number of clusters and identifies outliers without requiring pre-specified k.\n")
-    
+    # Discussion
+    print(f"\nDBSCAN with heurestic parameter selections gave a value of eps as {heuristic_eps:.5} and {heuristic_clusters} clusters which does not give us much information. Applied a multipler to attempt to reduce the value of eps to get more meaningful data. This reduction gave us an optimal eps of {optimal_eps:.5} and {n_clusters} with a silhouette score of {best_silhouette_float:.5}. Overall DBSCAN does not perform well on this dataset due to the large dimension ({d_original}) of this dataset.\n")    
+   
     return {
         'best_eps': float(optimal_eps),
         'best_min_samples': int(min_samples),
