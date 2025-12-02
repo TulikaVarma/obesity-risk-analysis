@@ -64,7 +64,23 @@ def clustering_analysis(train_data):
 
   # Compare all three clustering results and discussion
   # Compare using silhouette, calinski, davies
-  # please give a bit of summarize from your own clustering result
+  print("*** Clustering comparison summary***")
+  print(f"{'Algorithm':<15} {'k':<5} {'Silhouette':<12} {'Calinski-H':<12} {'Davies-B':<12}")
+  print("-"*60)
+
+  # Hierarchical
+  print(f"{'Hierarchical':<15} {hierarchical_results['best_n_clusters']:<5} {hierarchical_results['best_sillhouette']:<12.3f} {hierarchical_results['calinski_harabasz']:<12.1f} {hierarchical_results['davies_bouldin']:<12.3f}")
+
+  # CLARANS
+  print(f"{'CLARANS':<15} {clarans_results['best_n_clusters']:<5} {clarans_results['best_silhouette']:<12.3f} {clarans_results['calinski_harabasz']:<12.1f} {clarans_results['davies_bouldin']:<12.3f}")
+
+  # DBSCAN
+  print(f"{'DBSCAN':<15} {dbscan_results['best_n_clusters']:<5} {dbscan_results['best_silhouette']:<12.3f} {dbscan_results['calinski_harabasz']:<12.1f} {dbscan_results['davies_bouldin']:<12.3f} {dbscan_results['noise_ratio'] * 100:<12.1f}")
+
+  print("-"*60)
+
+  # Summarize
+  print(f"\nAll algorithms evaluated on same 15 PCA components (86.4% variance) with DBSCAN achieved the highest silhouette score ({dbscan_results['best_silhouette']:.3f}) and Davies-Bould Index ({dbscan_results['davies_bouldin']:.3f}). While Hierarchical are better in Calinski-Harabasz Index ({hierarchical_results['calinski_harabasz']:.1f})\n")
 
   return clustering_results
 
@@ -88,8 +104,20 @@ def outlier_detection(train_data):
   }
 
   # Analyze all three outlier detection results and discussion
-  # Compare using number of outliers and percentage of outliers
-  # please give a bit of summarize from your own outlier detection result
+  print("\n*** Outlier Detection Comparison Summary ***")
+  print(f"{'Method':<20} {'Outliers':<12} {'Percentage':<12} {'Threshold':<15}")
+  print("-"*60)
+  
+  print(f"{'k-NN Distance':<20} {knn_outlier_results['n_outliers']:<12} {knn_outlier_results['percentage']:<12.2f} {knn_outlier_results['threshold']:<15.4f}")
+  print(f"{'Probabilistic (GMM)':<20} {probabilistic_outlier_results['n_outliers']:<12} {probabilistic_outlier_results['percentage']:<12.2f} {probabilistic_outlier_results['threshold']:<15.4f}")
+  print(f"{'LOF':<20} {lof_outlier_results['n_outliers']:<12} {lof_outlier_results['percentage']:<12.2f} {lof_outlier_results.get('threshold_estimate', 0):<15.4f}")
+  
+  print("-"*60)
+  
+  print(f"All three methods detected similar outlier counts ({knn_outlier_results['n_outliers']}-{lof_outlier_results['n_outliers']} outliers) which is about 5%, showing consistency across different detection approaches.\n")
+  print("Normal weight class shows highest outlier rate (15-21% across methods) showing variability, while Obesity_Type_III shows lowest outlier rate (0-5%) showing consitency in obesity cases.")
+  
+  print("we decide to keep all the data since outliers mostly represent unusual but valid combinations of features (including extreme normal-weight and obese cases).")
 
   return outlier_detection_results
 
@@ -97,14 +125,11 @@ def feature_selection(train_data, valid_data, test_data):
   # Feature Selection
   print("3. FEATURE SELECTION") 
 
-  mi_results = mutual_information(train_data, valid_data, test_data)
   lasso_results = lasso_feature_selection(train_data, valid_data, test_data)
   feature_selection_results = {
-    'mutual_information': mi_results,
     'lasso': lasso_results,
   }
-
-  # Evaluate the model and for each model, compare with and without feature selection
+  print("-"*60 + "\n")
 
   return feature_selection_results
 
@@ -122,7 +147,16 @@ def classification(train_data, valid_data, test_data, feature_selection_results)
     'random_forest': rf_results,
   }
 
-  # Evaluate the models (classification results and discussion)
+  # Classification summary
+  print("\n*** CLASSIFICATION COMPARISON SUMMARY ***")
+  print(f"{'Classifier':<20} {'Accuracy':<12} {'Precision':<12} {'Recall':<12} {'F1-Score':<12} {'CV Mean':<12}")
+  print("-"*80)
+
+  print(f"{'k-NN':<20} {knn_results['accuracy']:<12.4f} {knn_results['precision']:<12.4f} {knn_results['recall']:<12.4f} {knn_results['f1_score']:<12.4f} {knn_results['cv_mean']:<12.4f}")
+  print(f"{'Logistic Regression':<20} {lr_results['accuracy']:<12.4f} {lr_results['precision']:<12.4f} {lr_results['recall']:<12.4f} {lr_results['f1_score']:<12.4f} {lr_results['cv_mean']:<12.4f}")
+  print(f"{'Random Forest':<20} {rf_results['accuracy']:<12.4f} {rf_results['precision']:<12.4f} {rf_results['recall']:<12.4f} {rf_results['f1_score']:<12.4f} {rf_results['cv_mean']:<12.4f}")
+  
+  print("-"*80 + "\n")
   
   return classification_results
 
@@ -139,8 +173,16 @@ def hyperparameter_tuning(classification_results):
     'random_forest_tuned': rf_tuned,
     'logistic_regression_tuned': lr_tuned,
   }
+
+  print("\n*** HYPERPARAMETER TUNING SUMMARY ***")
+  print(f"{'Classifier':<20} {'Before':<12} {'After':<12} {'Improvement':<15}")
+  print("-"*60)
     
-  # Evaluate the models (hyperparameter tuning results and discussion)
+  print(f"{'k-NN':<20} {classification_results['knn']['accuracy']:<12.4f} {knn_tuned['tuned_accuracy']:<12.4f} {f'+{knn_tuned['improvement']:.4f} (+{knn_tuned['improvement']*100:.1f}%)':<15}")
+  print(f"{'Random Forest':<20} {classification_results['random_forest']['accuracy']:<12.4f} {rf_tuned['tuned_accuracy']:<12.4f} {f'+{rf_tuned['improvement']:.4f} (+{rf_tuned['improvement']*100:.1f}%)':<15}")
+  print(f"{'Logistic Regression':<20} {classification_results['logistic_regression']['accuracy']:<12.4f} {lr_tuned['tuned_accuracy']:<12.4f} {f'+{lr_tuned['improvement']:.4f} (+{lr_tuned['improvement']*100:.1f}%)':<15}")
+    
+  print("-"*60 + "\n")
 
   return hyperparameter_tuning_results
 

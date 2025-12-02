@@ -144,7 +144,10 @@ def lasso_feature_selection(train_data, valid_data, test_data):
     
     print(f"\n*** Lasso Feature Selection Analysis ***")
     print(f"\nFindings:")
+    print(f"With all 31 features: {acc_full:.4f} accuracy")
+    print(f"With 21 selected features: {acc_selected:.4f} accuracy")
     print(f"Accuracy change: {acc_change:+.4f} ({acc_change/acc_full*100:+.1f}%)")
+    print(f"Training speedup: {((train_time_full - train_time_selected) / train_time_full * 100):.1f}%")
     print(f"applied Lasso Regression with 5-fold cross-validation. The optimal regularization parameter (alpha ={optimal_alpha}) selected 21 out of 31 features (67.7%), including Weight, CAEC_Frequently, family history, Age, and Height as the most important. It reduces less relevant features to zero, improving model performance while decreasing computational complexity.\n")
     
     return {
