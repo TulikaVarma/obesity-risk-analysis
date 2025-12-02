@@ -79,7 +79,7 @@ def clustering_analysis(train_data):
   print("-"*60)
 
   # Summarize
-  print(f"\nAll algorithms evaluated on same 15 PCA components (86.4% variance) with DBSCAN achieved the highest silhouette score ({dbscan_results['best_silhouette']:.3f}) and Davies-Bould Index ({dbscan_results['davies_bouldin']:.3f}). While Hierarchical are better in Calinski-Harabasz Index ({hierarchical_results['calinski_harabasz']:.1f})\n")
+  print(f"\nAll algorithms evaluated on same 15 PCA components (86.4% variance) with DBSCAN achieved the highest silhouette score ({dbscan_results['best_silhouette']:.3f}) and Davies-Bouldin Index ({dbscan_results['davies_bouldin']:.3f}). While Hierarchical are better in Calinski-Harabasz Index ({hierarchical_results['calinski_harabasz']:.1f})\n")
 
   return clustering_results
 

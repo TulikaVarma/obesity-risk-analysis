@@ -86,7 +86,10 @@ def hierarchical_clustering(X_pca, y):
     most_common = cluster_data['Obesity_Class'].mode()[0] if len(cluster_data) > 0 else 'N/A'
     print(f"Cluster {cluster_id} (n={len(cluster_data)}): Most common class = {most_common}")
 
-  best_sillhouette = results_df.loc[results_df['silhoutte_score'].idxmax(), 'silhoutte_score']
+  best_result = results_df.loc[results_df['silhoutte_score'].idxmax()]
+  best_sillhouette = best_result['silhoutte_score']
+  best_calinski = best_result['calinski_harabasz_score']
+  best_davies = best_result['davies_bouldin_score']
 
   # Discussion: Appropriateness and Performance Comparison
   print("\n*** Hierarchical Clustering Analysis Discussion ***")
@@ -96,6 +99,6 @@ def hierarchical_clustering(X_pca, y):
   return {
     'best_n_clusters': best_n_clusters,
     'best_sillhouette': best_sillhouette,
-    'calinski_harabasz': calinski_harabasz,
-    'davies_bouldin': davies_bouldin,
+    'calinski_harabasz': best_calinski,
+    'davies_bouldin': best_davies,
   }
