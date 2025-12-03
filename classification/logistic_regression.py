@@ -11,7 +11,7 @@ from sklearn.metrics import (
 )
 from sklearn.preprocessing import label_binarize
 
-def logistic_regression_classification(train_data, valid_data, test_data, feature_selection):
+def logistic_regression_classification(train_data, test_data, feature_selection):
     # Reuse data from Lasso feature selection
     X_train_selected = feature_selection['X_train_selected']
     X_test_selected = feature_selection['X_test_selected']

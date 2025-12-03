@@ -8,7 +8,7 @@ from sklearn.linear_model import Lasso, LassoCV
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
 
-def lasso_feature_selection(train_data, valid_data, test_data):
+def lasso_feature_selection(train_data, test_data):
     # Prepare data
     X_train = train_data.drop(['NObeyesdad'], axis=1)
     y_train_original = train_data['NObeyesdad']

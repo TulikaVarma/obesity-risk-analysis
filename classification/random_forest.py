@@ -17,7 +17,7 @@ from sklearn.metrics import (
 from sklearn.preprocessing import label_binarize
 
 
-def random_forest_classification(train_data, valid_data, test_data, feature_selection):
+def random_forest_classification(train_data, test_data, feature_selection):
     X_train_selected = feature_selection["X_train_selected"]
     X_test_selected = feature_selection["X_test_selected"]
     y_train = feature_selection["y_train"]

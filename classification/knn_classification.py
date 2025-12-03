@@ -13,7 +13,7 @@ from sklearn.metrics import (
 )
 from sklearn.preprocessing import label_binarize
 
-def knn_classification(train_data, valid_data, test_data, feature_selection):
+def knn_classification(train_data, test_data, feature_selection):
   # Reuse data from mutual_information
   X_train_selected = feature_selection['X_train_selected']
   X_test_selected = feature_selection['X_test_selected']

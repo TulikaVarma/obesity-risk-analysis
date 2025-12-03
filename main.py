@@ -1,3 +1,5 @@
+import warnings
+warnings.filterwarnings('ignore')
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
@@ -21,20 +23,20 @@ def load_and_split_data():
   data = pd.read_csv("cleaned_data.csv")
   data = data.sample(frac=1, random_state=30).reset_index(drop=True)
   
-  train_size = int(0.6 * len(data))
-  valid_size = int(0.2 * len(data))
+  train_size = int(0.8 * len(data))
+  # valid_size = int(0.2 * len(data))
   
   train_data = data.iloc[:train_size]
-  valid_data = data.iloc[train_size:train_size + valid_size]
-  test_data = data.iloc[train_size + valid_size:]
+  # valid_data = data.iloc[train_size:train_size + valid_size]
+  test_data = data.iloc[train_size:]
   
   print(f"Data Split:")
   print(f"Total Samples: {len(data)}")
   print(f"Training Samples: {len(train_data)} (60%)")
-  print(f"Validation Samples: {len(valid_data)} (20%)")
+  # print(f"Validation Samples: {len(valid_data)} (20%)")
   print(f"Test Samples: {len(test_data)} (20%)")
   
-  return data, train_data, valid_data, test_data
+  return data, train_data, test_data
 
 def clustering_analysis(train_data):
   # Clustering Analysis
@@ -74,7 +76,7 @@ def clustering_analysis(train_data):
   print(f"{'CLARANS':<15} {clarans_results['best_n_clusters']:<5} {clarans_results['best_silhouette']:<12.3f} {clarans_results['calinski_harabasz']:<12.1f} {clarans_results['davies_bouldin']:<12.3f}")
 
   # DBSCAN
-  print(f"{'DBSCAN':<15} {dbscan_results['best_n_clusters']:<5} {dbscan_results['best_silhouette']:<12.3f} {dbscan_results['calinski_harabasz']:<12.1f} {dbscan_results['davies_bouldin']:<12.3f} {dbscan_results['noise_ratio'] * 100:<12.1f}")
+  print(f"{'DBSCAN':<15} {dbscan_results['best_n_clusters']:<5} {dbscan_results['best_silhouette']:<12.3f} {dbscan_results['calinski_harabasz']:<12.1f} {dbscan_results['davies_bouldin']:<12.3f} ")
 
   print("-"*60)
 
@@ -120,11 +122,11 @@ def outlier_detection(train_data):
 
   return outlier_detection_results
 
-def feature_selection(train_data, valid_data, test_data):
+def feature_selection(train_data, test_data):
   # Feature Selection
   print("3. FEATURE SELECTION") 
 
-  lasso_results = lasso_feature_selection(train_data, valid_data, test_data)
+  lasso_results = lasso_feature_selection(train_data, test_data)
   feature_selection_results = {
     'lasso': lasso_results,
   }
@@ -132,13 +134,13 @@ def feature_selection(train_data, valid_data, test_data):
 
   return feature_selection_results
 
-def classification(train_data, valid_data, test_data, feature_selection_results):
+def classification(train_data, test_data, feature_selection_results):
   # Classification
   print("4. CLASSIFICATION")
 
-  knn_results = knn_classification(train_data, valid_data, test_data, feature_selection_results['lasso'])
-  lr_results = logistic_regression_classification(train_data, valid_data, test_data, feature_selection_results['lasso']) 
-  rf_results = random_forest_classification(train_data, valid_data, test_data, feature_selection_results['lasso'])
+  knn_results = knn_classification(train_data, test_data, feature_selection_results['lasso'])
+  lr_results = logistic_regression_classification(train_data, test_data, feature_selection_results['lasso']) 
+  rf_results = random_forest_classification(train_data, test_data, feature_selection_results['lasso'])
 
   classification_results = {
     'knn': knn_results,
@@ -187,15 +189,13 @@ def hyperparameter_tuning(classification_results):
 
 def main():
   # Load and split data
-  data, train_data, valid_data, test_data = load_and_split_data()
+  data, train_data, test_data = load_and_split_data()
 
   # Run analysis using Hierarchical, Random Forest, and ...
-  # hierarchical_results = hierarchical_analysis(data, train_data, valid_data, test_data)
-  # rf_results = random_forest_predict(train_data, valid_data, test_data)
   clustering_results = clustering_analysis(train_data)
   outlier_results = outlier_detection(train_data)
-  feature_selection_results = feature_selection(train_data, valid_data, test_data)
-  classification_results = classification(train_data, valid_data, test_data, feature_selection_results)
+  feature_selection_results = feature_selection(train_data, test_data)
+  classification_results = classification(train_data, test_data, feature_selection_results)
   tuning_results = hyperparameter_tuning(classification_results)
 
   return {

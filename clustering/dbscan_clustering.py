@@ -62,111 +62,55 @@ def dbscan_clustering(X_pca, y):
     print("\n==== DBSCAN Clustering ====")
     print(f"Input: {X_pca.shape[1]} PCA components (pre-processed)")
 
-    # Parameter values 
+    # Parameter values using heuristic
     k = 2 * d_original - 1
     min_samples = k + 1
     optimal_eps = find_optimal_eps(X_pca, k, plot=True)
-    heuristic_eps = optimal_eps
-    print(f"Parameter Selection:")
+    
+    print(f"\nParameter Selection (Heuristic):")
     print(f" - d = {d_original}")
     print(f" - k = {k}")
     print(f" - MinPts = {min_samples}")
-    print(f" - epsilon = {heuristic_eps:.5f}")
+    print(f" - epsilon = {optimal_eps:.5f}")
     
     # Run DBSCAN with heuristic parameters
     dbscan = DBSCAN(eps=optimal_eps, min_samples=min_samples)
     cluster_labels = dbscan.fit_predict(X_pca)
     n_clusters = len(set(cluster_labels)) - (1 if -1 in cluster_labels else 0)
-    heuristic_clusters = n_clusters
     n_noise = int((cluster_labels == -1).sum())
     noise_ratio = n_noise / len(cluster_labels)
     
-    # Calculate silhouette for heuristic parameters 
-    heuristic_silhouette = "unavailable"
+    print(f"\nDBSCAN Results:")
+    print(f" - Clusters found: {n_clusters}")
+    print(f" - Noise points: {n_noise} ({noise_ratio*100:.1f}%)")
+    
+    # Calculate metrics if we have valid clusters
+    best_silhouette_float = -1.0
+    calinski_harabasz = 0.0
+    davies_bouldin = 999.0
+    
     if n_clusters >= 2 and n_noise < len(cluster_labels):
         mask = cluster_labels != -1
         try:
-            heuristic_silhouette = f"{silhouette_score(X_pca[mask], cluster_labels[mask]):.3f}"
-        except:
-            heuristic_silhouette = "unavailable"
-    
-    # Print values from heurestic parameters
-    print(f"Results with parameter selection eps: {optimal_eps:.5f}, clusters: {n_clusters}, noise: {n_noise}, silhouette: {heuristic_silhouette}")
-
-    # If heuristic didn't produce valid clusters use eps with multiplier 
-    if n_clusters < 2:
-        print(f"\nTrying different eps values using a multiplier for more meaningful results\n")
-        
-        # Store results for all multipliers
-        test_results = []
-        # Try different epsilon values
-        for multiplier in [0.3, 0.5, 0.8]:
-            test_eps = optimal_eps * multiplier
-            dbscan_test = DBSCAN(eps=test_eps, min_samples=min_samples)
-            test_labels = dbscan_test.fit_predict(X_pca)
-            test_n_clusters = len(set(test_labels)) - (1 if -1 in test_labels else 0)
-            test_n_noise = int((test_labels == -1).sum())
-            
-            # Calculate silhouette score for valid clusters
-            test_silhouette = "unavailable"
-            test_silhouette_float = -1.0
-            if test_n_clusters >= 2 and test_n_noise < len(cluster_labels):
-                mask = test_labels != -1
-                try:
-                    test_silhouette_float = silhouette_score(X_pca[mask], test_labels[mask])
-                    test_silhouette = f"{test_silhouette_float:.5f}"
-                except:
-                    test_silhouette = "unavailable"
-                    test_silhouette_float = -1.0
-            
-            print(f"eps: {test_eps:.5f}, clusters: {test_n_clusters}, noise: {test_n_noise}, silhouette: {test_silhouette}")
-            
-            # Store result
-            test_results.append({
-                'eps': test_eps,
-                'labels': test_labels,
-                'n_clusters': test_n_clusters,
-                'n_noise': test_n_noise,
-                'silhouette': test_silhouette,
-                'silhouette_float': test_silhouette_float,
-                'valid': test_n_clusters >= 2 and test_n_noise < len(cluster_labels) * 0.9
-            })
-        
-        # Select the best valid result based on silhouette score
-        valid_results = [r for r in test_results if r['valid']]
-        if valid_results:
-            # Pick the result with the best silhouette score
-            best_result = max(valid_results, key=lambda r: r['silhouette_float'])
-            optimal_eps = best_result['eps']
-            cluster_labels = best_result['labels']
-            n_clusters = best_result['n_clusters']
-            n_noise = best_result['n_noise']
-            noise_ratio = n_noise / len(cluster_labels)
-            best_silhouette_float = best_result['silhouette_float']
-            print(f"\nSelected eps={optimal_eps:.5f} based on best silhouette score")
-    
-    # Calculate remaining metrics if we have valid clusters
-    if n_clusters >= 2 and n_noise < len(cluster_labels):
-        mask = cluster_labels != -1
-        try:
+            best_silhouette_float = silhouette_score(X_pca[mask], cluster_labels[mask])
             calinski_harabasz = calinski_harabasz_score(X_pca[mask], cluster_labels[mask])
             davies_bouldin = davies_bouldin_score(X_pca[mask], cluster_labels[mask])
-        except:
-            calinski_harabasz = 0.0
-            davies_bouldin = 999.0
+            
+            print(f" - Silhouette Score: {best_silhouette_float:.5f}")
+            print(f" - Calinski-Harabasz Index: {calinski_harabasz:.5f}")
+            print(f" - Davies-Bouldin Index: {davies_bouldin:.5f}")
+        except Exception as e:
+            print(f" - Unable to calculate metrics: {e}")
+            print(f" - Silhouette Score: unavailable")
+            print(f" - Calinski-Harabasz Index: unavailable")
+            print(f" - Davies-Bouldin Index: unavailable")
     else:
-        print("\nNo valid clusters found")
-        calinski_harabasz = 0.0
-        davies_bouldin = 999.0
-    
-    print(f"\nDBSCAN Results:")
-    print(f" - eps={optimal_eps:.5f}, min_samples={min_samples},clusters: {n_clusters}, noise: {n_noise} ({noise_ratio*100:.1f}%)")
-    print(f" - Silhouette Score: {best_silhouette_float:.5f}")
-    print(f" - Calinski-Harabasz Index: {calinski_harabasz:.5f}")
-    print(f" - Davies-Bouldin Index: {davies_bouldin:.5f}")
+        print(f" - Silhouette Score: unavailable (need at least 2 clusters)")
+        print(f" - Calinski-Harabasz Index: unavailable")
+        print(f" - Davies-Bouldin Index: unavailable")
     
     # Create 2D PCA for visualization 
-    print("\nPCA visualization: ")
+    print("\nGenerating PCA visualization...")
     pca_2d = PCA(n_components=2)
     X_pca_2d = pca_2d.fit_transform(X_pca)
     
@@ -215,7 +159,8 @@ def dbscan_clustering(X_pca, y):
     cluster_df = pd.DataFrame({'Cluster': cluster_labels, 'Obesity_Class': y})
     
     if n_noise > 0:
-        print(f" - Noise (n={n_noise}, {noise_ratio*100:.1f}")
+        print(f" - Noise (n={n_noise}, {noise_ratio*100:.1f}%)")
+        
     for cluster_id in range(n_clusters):
         cluster_data = cluster_df[cluster_df['Cluster'] == cluster_id]
         if len(cluster_data) > 0:
@@ -225,7 +170,8 @@ def dbscan_clustering(X_pca, y):
             print(f" - Cluster {cluster_id} (n={count}, {percentage:.1f}%): Most common = {most_common}")
     
     # Discussion
-    print(f"\nDBSCAN with heurestic parameter selections gave a value of eps as {heuristic_eps:.5} and {heuristic_clusters} clusters which does not give us much information. Applied a multipler to attempt to reduce the value of eps to get more meaningful data. This reduction gave us an optimal eps of {optimal_eps:.5} and {n_clusters} with a silhouette score of {best_silhouette_float:.5}. Overall DBSCAN does not perform well on this dataset due to the large dimension ({d_original}) of this dataset.\n")    
+    print(f"\nDBSCAN with heuristic parameter selection (eps={optimal_eps:.5f}, MinPts={min_samples}) identified {n_clusters} clusters with {n_noise} noise points ({noise_ratio*100:.1f}%) and Silhouette score: {best_silhouette_float:.5f}")
+    print(f"DBSCAN's performance is limited on this dataset due to high dimensionality ({d_original} PCA components).\n")
    
     return {
         'best_eps': float(optimal_eps),
