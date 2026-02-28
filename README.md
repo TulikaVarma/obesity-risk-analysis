@@ -1,4 +1,4 @@
-# CMPT 459 – Obesity Analysis (Group 8)
+# CMPT 459 – Obesity Analysis 
 
 Lightweight README (not a report). Covers setup, environment, how to run, repo map, and data notes.
 
